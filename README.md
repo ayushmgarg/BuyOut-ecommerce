@@ -22,7 +22,7 @@ High-concurrency flash-sale system that guarantees exactly N successful purchase
                     │  + Expiry Sweep  │
                     └─────────────────┘
 ```
-![Architecture](image1.jpeg)
+
 
 | Service   | Tech          | Port | Role                                 |
 |-----------|---------------|------|--------------------------------------|
