@@ -1,10 +1,13 @@
 export default function SoldOutBanner() {
   return (
-    <div className="mt-8 px-12 py-8 bg-red-950/40 border border-red-800/50 rounded-xl text-center">
-      <p className="text-3xl font-bold text-red-400 mb-2">SOLD OUT</p>
-      <p className="text-midnight-100/60">
-        All units have been claimed. Better luck next time.
+    <div className="text-center">
+      <p className="text-5xl font-black text-snkrs-crimson uppercase tracking-tight mb-3">
+        Sold Out
       </p>
+      <p className="text-white/40 text-sm tracking-wide">
+        All 1,000 pairs have been claimed
+      </p>
+      <div className="mt-4 mx-auto w-32 h-px bg-gradient-to-r from-transparent via-snkrs-crimson/50 to-transparent" />
     </div>
   );
 }

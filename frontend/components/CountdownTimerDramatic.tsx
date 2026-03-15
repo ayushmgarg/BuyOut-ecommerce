@@ -22,18 +22,18 @@ function DigitCard({
   urgent: boolean;
   critical: boolean;
 }) {
-  const borderClass = urgent
-    ? "border-red-500/50"
-    : "border-midnight-700/30";
-
-  const textClass = critical ? "text-red-400" : "text-white";
+  const borderClass = critical
+    ? "border-b-snkrs-crimson"
+    : urgent
+      ? "border-b-snkrs-crimson/50"
+      : "border-b-white/10";
 
   return (
     <div
       className={`
         relative flex items-center justify-center
-        w-[60px] h-[80px]
-        bg-midnight-900/80 border rounded-lg overflow-hidden
+        w-[72px] h-[96px]
+        border-b-2 overflow-hidden
         ${borderClass}
         ${urgent ? "animate-pulse-glow" : ""}
       `}
@@ -45,7 +45,7 @@ function DigitCard({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -20, opacity: 0 }}
           transition={{ duration: 0.25, ease: "easeInOut" }}
-          className={`text-5xl font-mono font-bold tabular-nums ${textClass}`}
+          className="text-6xl font-black tabular-nums text-white"
         >
           {digit}
         </motion.span>
@@ -73,7 +73,7 @@ function DigitPair({
         <DigitCard digit={d1} urgent={urgent} critical={critical} />
         <DigitCard digit={d2} urgent={urgent} critical={critical} />
       </div>
-      <span className="text-[10px] uppercase tracking-widest text-midnight-100/40">
+      <span className="text-[9px] uppercase tracking-[0.3em] text-white/25">
         {label}
       </span>
     </div>
@@ -84,8 +84,8 @@ function ColonSeparator({ critical }: { critical: boolean }) {
   return (
     <div className="flex items-center pb-6">
       <span
-        className={`text-4xl font-mono font-bold ${
-          critical ? "text-red-400" : "text-midnight-500"
+        className={`text-4xl font-black ${
+          critical ? "text-snkrs-crimson" : "text-white/20"
         }`}
       >
         :
@@ -131,30 +131,15 @@ export default function CountdownTimerDramatic({
 
   return (
     <div className={`text-center ${critical ? "animate-heartbeat" : ""}`}>
-      <p className="text-midnight-100/60 mb-6 uppercase tracking-widest text-sm">
-        Drop starts in
+      <p className="text-[10px] tracking-[0.4em] text-white/40 uppercase mb-6 font-medium">
+        Dropping In
       </p>
       <div className="flex items-start justify-center gap-3">
-        <DigitPair
-          value={hours}
-          label="Hours"
-          urgent={urgent}
-          critical={critical}
-        />
+        <DigitPair value={hours} label="Hours" urgent={urgent} critical={critical} />
         <ColonSeparator critical={critical} />
-        <DigitPair
-          value={minutes}
-          label="Minutes"
-          urgent={urgent}
-          critical={critical}
-        />
+        <DigitPair value={minutes} label="Minutes" urgent={urgent} critical={critical} />
         <ColonSeparator critical={critical} />
-        <DigitPair
-          value={seconds}
-          label="Seconds"
-          urgent={urgent}
-          critical={critical}
-        />
+        <DigitPair value={seconds} label="Seconds" urgent={urgent} critical={critical} />
       </div>
     </div>
   );

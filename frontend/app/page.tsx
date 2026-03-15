@@ -3,9 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import CountdownTimerDramatic from "@/components/CountdownTimerDramatic";
 import LiveStatsBar from "@/components/LiveStatsBar";
 import BotLauncher from "@/components/BotLauncher";
+import SneakerHero from "@/components/SneakerHero";
 import { api } from "@/lib/api";
 
 const PRODUCT_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
@@ -47,39 +49,87 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="relative flex flex-col items-center justify-center min-h-screen p-8 overflow-hidden">
-      {/* Animated background */}
-      <div className="absolute inset-0 animate-radial-pulse pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(107,92,231,0.05)_0%,transparent_50%)] pointer-events-none" />
+    <main className="relative min-h-screen bg-[#0a0a0f] overflow-hidden">
+      {/* Top nav */}
+      <nav className="relative z-20 flex items-center justify-between px-8 py-5 border-b border-white/[0.04]">
+        <span className="text-xs font-bold tracking-[0.3em] uppercase text-white/80">
+          Air Max Midnight
+        </span>
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.25em] uppercase text-white/30 hover:text-white/60 transition-colors"
+        >
+          Dashboard
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </Link>
+      </nav>
+
+      {/* Background glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-snkrs-crimson/[0.04] blur-[100px]" />
+      </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center gap-6 max-w-2xl w-full">
-        {/* Title */}
-        <div className="text-center mb-4">
-          <h1 className="text-6xl font-bold tracking-[0.15em] uppercase text-gradient-purple mb-3">
-            Midnight
-          </h1>
-          <h2 className="text-3xl font-bold tracking-[0.2em] uppercase text-midnight-100/70">
-            Product Drop
-          </h2>
-          <p className="mt-3 text-midnight-100/40 text-sm tracking-widest uppercase">
-            Limited Edition Sneakers &mdash; Only 1,000 Pairs
-          </p>
-        </div>
+      <div className="relative z-10 flex flex-col items-center pt-8 pb-16 px-4">
+        {/* Exclusive badge */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-6"
+        >
+          <span className="inline-block px-4 py-1.5 text-[10px] font-bold tracking-[0.3em] uppercase text-snkrs-crimson border border-snkrs-crimson/30 bg-snkrs-crimson/5">
+            Exclusive Drop
+          </span>
+        </motion.div>
 
-        {/* Countdown or Join Button */}
-        <div className="my-6">
+        {/* Sneaker Hero */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          <SneakerHero size="lg" floating glowing />
+        </motion.div>
+
+        {/* Product info */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="text-center mt-2 mb-8"
+        >
+          <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tight text-white mb-2">
+            Air Max Midnight
+          </h1>
+          <p className="text-sm tracking-[0.2em] uppercase text-white/30 mb-3">
+            Midnight Edition
+          </p>
+          <p className="text-2xl font-black text-white">$149.99</p>
+        </motion.div>
+
+        {/* Countdown or Enter Draw */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.7 }}
+          className="mb-8"
+        >
           {saleOpen ? (
-            <div className="text-center flex flex-col items-center gap-5">
-              <p className="text-sm uppercase tracking-[0.3em] text-green-400 animate-pulse font-bold">
-                Sale is Live
+            <div className="text-center flex flex-col items-center gap-4">
+              <p className="text-[10px] uppercase tracking-[0.4em] text-snkrs-success font-bold animate-pulse">
+                Drop is Live
               </p>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => router.push("/waiting-room")}
-                className="px-10 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-lg font-bold uppercase tracking-widest rounded-xl shadow-[0_0_30px_rgba(107,92,231,0.4)] hover:shadow-[0_0_50px_rgba(107,92,231,0.6)] transition-all duration-300 transform hover:scale-105"
+                className="px-14 py-4 bg-snkrs-crimson hover:bg-snkrs-crimson/90 text-white text-sm font-bold uppercase tracking-[0.25em] btn-snkrs transition-all"
               >
-                Join the Queue
-              </button>
+                Enter Draw
+              </motion.button>
             </div>
           ) : targetTime ? (
             <CountdownTimerDramatic
@@ -88,42 +138,28 @@ export default function Home() {
             />
           ) : (
             <div className="text-center py-12">
-              <div className="w-6 h-6 border-2 border-midnight-500/40 border-t-midnight-500 rounded-full animate-spin mx-auto" />
-              <p className="text-midnight-100/40 mt-3 text-xs uppercase tracking-widest">
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto" />
+              <p className="text-white/30 mt-3 text-[10px] uppercase tracking-[0.3em]">
                 Connecting...
               </p>
             </div>
           )}
-        </div>
+        </motion.div>
+
+        {/* Limited info */}
+        <p className="text-[10px] tracking-[0.4em] uppercase text-white/20 mb-8">
+          1,000 Pairs &bull; One Per Customer
+        </p>
 
         {/* Live Stats */}
-        <LiveStatsBar />
-
-        {/* Bot Launcher */}
-        <div className="w-full max-w-sm mt-4">
-          <BotLauncher onReset={handleReset} />
+        <div className="w-full max-w-lg mb-6">
+          <LiveStatsBar />
         </div>
 
-        {/* Dashboard Link */}
-        <Link
-          href="/dashboard"
-          className="mt-4 flex items-center gap-2 text-xs uppercase tracking-widest text-midnight-500 hover:text-midnight-100/80 transition-colors group"
-        >
-          <span>Open Observer Dashboard</span>
-          <svg
-            className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M13 7l5 5m0 0l-5 5m5-5H6"
-            />
-          </svg>
-        </Link>
+        {/* Bot Launcher */}
+        <div className="w-full max-w-sm">
+          <BotLauncher onReset={handleReset} />
+        </div>
       </div>
     </main>
   );

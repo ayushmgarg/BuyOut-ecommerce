@@ -59,7 +59,7 @@ function Metric({
 }
 
 function VerticalDivider() {
-  return <div className="w-px h-8 bg-midnight-700/30 self-center" />;
+  return <div className="w-px h-8 bg-white/[0.06] self-center" />;
 }
 
 function ConnectionDot({ connected }: { connected: boolean }) {
@@ -99,18 +99,18 @@ export default function LiveStatsBar() {
   const throughputColor = "text-cyan-400";
 
   return (
-    <div className="bg-midnight-900/40 border border-midnight-700/20 rounded-xl px-8 py-4 backdrop-blur-sm">
+    <div className="w-full bg-white/[0.02] border border-white/[0.06] px-8 py-4">
       <div className="flex items-center justify-center gap-6">
         <ConnectionDot connected={connected} />
         <VerticalDivider />
         <Metric
-          label="Stock Remaining"
+          label="Stock"
           value={stock}
           colorClass={stockColor}
         />
         <VerticalDivider />
         <Metric
-          label="In Queue"
+          label="Queue"
           value={queueDepth}
           colorClass={queueColor}
         />

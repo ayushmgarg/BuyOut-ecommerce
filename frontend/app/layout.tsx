@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Midnight Product Drop",
-  description: "Limited edition flash sale — be fast or miss out",
+  title: "AIR MAX MIDNIGHT | Exclusive Drop",
+  description: "Limited edition. 1,000 pairs. One chance.",
 };
 
 export default function RootLayout({
@@ -12,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="bg-midnight-950 text-white min-h-screen antialiased">
+    <html lang="en" className={inter.variable}>
+      <body className="font-display bg-midnight-950 text-white min-h-screen antialiased">
         {children}
       </body>
     </html>

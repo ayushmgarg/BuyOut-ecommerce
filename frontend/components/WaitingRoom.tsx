@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { CheckCircle2 } from "lucide-react";
 import { api } from "@/lib/api";
 
 interface WaitingRoomProps {
@@ -21,13 +22,17 @@ export default function WaitingRoom({ productId, userId, onTokenReceived, onSold
   const redirectedRef = useRef(false);
   const soldOutRef = useRef(false);
 
-  // When token received, show "You're in!" for 1 second before redirecting
+  // When token received, show "You're in!" briefly then redirect
   useEffect(() => {
     if (tokenReady && receivedToken && !redirectedRef.current) {
       redirectedRef.current = true;
       const timer = setTimeout(() => {
         onTokenReceived(receivedToken);
-      }, 2000);
+        // Fallback: if router.push didn't navigate, force it
+        setTimeout(() => {
+          window.location.href = `/buy?token=${encodeURIComponent(receivedToken)}`;
+        }, 500);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [tokenReady, receivedToken, onTokenReceived]);
@@ -48,7 +53,6 @@ export default function WaitingRoom({ productId, userId, onTokenReceived, onSold
           setTokenReady(true);
         }
       }).catch((err) => {
-        // 410 = sold out
         if (err.message?.includes("410") || err.message?.includes("Sold out")) {
           if (!soldOutRef.current) {
             soldOutRef.current = true;
@@ -92,16 +96,19 @@ export default function WaitingRoom({ productId, userId, onTokenReceived, onSold
   if (tokenReady) {
     return (
       <div className="text-center">
-        <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-        <p className="text-2xl font-bold text-green-400 mb-2">
-          You&apos;re in!
+        <CheckCircle2
+          size={56}
+          className="mx-auto mb-5 text-snkrs-success"
+        />
+        <p className="text-4xl font-black uppercase tracking-tight text-snkrs-success mb-2">
+          You&apos;re In
         </p>
         {totalJoined !== null && totalJoined > 1 && (
-          <p className="text-sm font-mono text-midnight-100/50 mb-2">
+          <p className="text-xs tracking-[0.2em] uppercase text-white/30 mb-2">
             {totalJoined.toLocaleString()} users joined this drop
           </p>
         )}
-        <p className="text-midnight-100/60">
+        <p className="text-white/40 text-sm">
           Redirecting to purchase...
         </p>
       </div>
@@ -110,26 +117,38 @@ export default function WaitingRoom({ productId, userId, onTokenReceived, onSold
 
   return (
     <div className="text-center">
-      <div className="w-16 h-16 border-4 border-midnight-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-      <p className="text-xl mb-2">You&apos;re in the waiting room</p>
+      {/* Pulsing rings */}
+      <div className="relative w-20 h-20 mx-auto mb-8">
+        <div className="absolute inset-0 rounded-full border-2 border-snkrs-crimson/10 animate-ping" style={{ animationDuration: "2s" }} />
+        <div className="absolute inset-2 rounded-full border-2 border-snkrs-crimson/20 animate-ping" style={{ animationDuration: "2s", animationDelay: "0.3s" }} />
+        <div className="absolute inset-4 rounded-full border-2 border-snkrs-crimson/30 animate-ping" style={{ animationDuration: "2s", animationDelay: "0.6s" }} />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-3 h-3 rounded-full bg-snkrs-crimson" />
+        </div>
+      </div>
+
       {position !== null && (
-        <p className="text-3xl font-bold text-midnight-500 mb-2">
-          Position #{position + 1}
+        <div className="mb-4">
+          <p className="text-8xl font-black text-snkrs-crimson tabular-nums leading-none mb-1">
+            #{position + 1}
+          </p>
           {totalInQueue !== null && totalInQueue > 1 && (
-            <span className="text-lg font-normal text-midnight-100/50">
-              {" "}of {totalInQueue}
-            </span>
+            <p className="text-lg text-white/30">
+              of {totalInQueue.toLocaleString()} in line
+            </p>
           )}
-        </p>
+        </div>
       )}
+
       {totalJoined !== null && totalJoined > 1 && (
-        <p className="text-sm font-mono text-midnight-100/40 mb-1">
-          {totalJoined.toLocaleString()} total users joined
+        <p className="text-xs tracking-[0.2em] uppercase text-white/20 mb-2">
+          {totalJoined.toLocaleString()} total joined
         </p>
       )}
+
       {estimatedWait !== null && estimatedWait > 0 && (
-        <p className="text-midnight-100/60">
-          Estimated wait: ~{estimatedWait}s
+        <p className="text-xs tracking-[0.3em] uppercase text-white/30">
+          Est. wait: ~{estimatedWait} sec
         </p>
       )}
     </div>

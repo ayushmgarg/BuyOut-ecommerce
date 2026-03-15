@@ -18,6 +18,14 @@ const config: Config = {
           900: "#0f0f1a",
           950: "#080810",
         },
+        snkrs: {
+          crimson: "#c41230",
+          orange: "#ff6b35",
+          success: "#00d68f",
+        },
+      },
+      fontFamily: {
+        display: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
     },
   },

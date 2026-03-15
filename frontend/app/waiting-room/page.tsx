@@ -4,18 +4,16 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import WaitingRoom from "@/components/WaitingRoom";
 import StockIndicator from "@/components/StockIndicator";
+import SneakerHero from "@/components/SneakerHero";
+import BotLauncher from "@/components/BotLauncher";
 import { api } from "@/lib/api";
 
 const PRODUCT_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
-const BOT_OPTIONS = [30, 1000, 10000];
 
 export default function WaitingRoomPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
-  const [botsLaunched, setBotsLaunched] = useState(false);
-  const [botMessage, setBotMessage] = useState<string | null>(null);
 
-  // Persist userId in sessionStorage so refresh keeps queue position
   useEffect(() => {
     const stored = sessionStorage.getItem("flash_sale_user_id");
     if (stored) {
@@ -38,28 +36,34 @@ export default function WaitingRoomPage() {
     router.push("/sold-out");
   }, [router]);
 
-  const launchBots = (count: number) => {
-    setBotMessage(null);
-    api.launchBots(count).then((data) => {
-      setBotsLaunched(true);
-      setBotMessage(data.message);
-    }).catch(() => {
-      setBotMessage("Failed to launch bots");
+  const handleReset = useCallback(() => {
+    api.resetSale().then(() => {
+      router.push("/");
     });
-  };
+  }, [router]);
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-8">
-      <h1 className="text-5xl font-bold mb-2 tracking-tight">
-        Midnight Product Drop
-      </h1>
-      <p className="text-midnight-100/60 mb-12 text-lg">
-        The sale is live &mdash; hang tight!
-      </p>
+    <main className="relative min-h-screen bg-[#0a0a0f] overflow-hidden">
+      {/* Product strip */}
+      <div className="border-b border-white/[0.04] px-6 py-4">
+        <div className="max-w-2xl mx-auto flex items-center gap-4">
+          <SneakerHero size="sm" className="shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-white/80">
+              Air Max Midnight
+            </p>
+            <p className="text-[10px] tracking-[0.15em] uppercase text-white/30 mt-0.5">
+              Midnight Edition &mdash; $149.99
+            </p>
+          </div>
+          <div className="shrink-0">
+            <StockIndicator productId={PRODUCT_ID} />
+          </div>
+        </div>
+      </div>
 
-      <StockIndicator productId={PRODUCT_ID} />
-
-      <div className="mt-12">
+      {/* Queue area */}
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] px-4">
         {userId ? (
           <WaitingRoom
             productId={PRODUCT_ID}
@@ -68,36 +72,13 @@ export default function WaitingRoomPage() {
             onSoldOut={handleSoldOut}
           />
         ) : (
-          <div className="w-16 h-16 border-4 border-midnight-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto" />
         )}
-      </div>
 
-      <div className="mt-10">
-        {!botsLaunched ? (
-          <div className="flex flex-col items-center gap-3">
-            <p className="text-xs text-midnight-100/40 uppercase tracking-widest">
-              Launch Bots
-            </p>
-            <div className="flex gap-3">
-              {BOT_OPTIONS.map((count) => (
-                <button
-                  key={count}
-                  onClick={() => launchBots(count)}
-                  className="px-4 py-2 bg-midnight-700 hover:bg-midnight-600 border border-midnight-500/30 rounded-lg text-sm text-midnight-100/80 transition-colors"
-                >
-                  {count.toLocaleString()}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-green-400/80">
-            {botMessage}
-          </p>
-        )}
-        {!botsLaunched && botMessage && (
-          <p className="mt-2 text-sm text-red-400/80 text-center">{botMessage}</p>
-        )}
+        {/* Bot Launcher */}
+        <div className="mt-12 w-full max-w-sm">
+          <BotLauncher onReset={handleReset} />
+        </div>
       </div>
     </main>
   );
