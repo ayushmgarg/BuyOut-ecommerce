@@ -1,0 +1,30 @@
+[project]
+name = "midnight-product-drop"
+version = "0.1.0"
+description = "High-concurrency flash-sale system with atomic inventory control"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.34.0",
+    "redis[hiredis]==5.2.1",
+    "asyncpg==0.30.0",
+    "pyjwt==2.10.1",
+    "stripe==11.4.1",
+    "tenacity==9.0.0",
+    "slowapi==0.1.9",
+    "structlog==24.4.0",
+    "pydantic-settings==2.7.1",
+    "httpx==0.28.1",
+    "python-multipart==0.0.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "pytest-asyncio==0.25.0",
+    "locust==2.32.4",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
