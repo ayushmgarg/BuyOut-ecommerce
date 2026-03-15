@@ -87,7 +87,7 @@ export const api = {
     return fetchJson(`${API_URL}/demo/bot-status`);
   },
 
-  resetSale(countdownSeconds: number = 30, stock: number = 100) {
+  resetSale(countdownSeconds: number = 30, stock: number = 1000) {
     return fetchJson(`${API_URL}/demo/reset`, {
       method: "POST",
       body: JSON.stringify({ countdown_seconds: countdownSeconds, stock }),

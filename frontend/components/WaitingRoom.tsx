@@ -13,6 +13,7 @@ interface WaitingRoomProps {
 export default function WaitingRoom({ productId, userId, onTokenReceived, onSoldOut }: WaitingRoomProps) {
   const [position, setPosition] = useState<number | null>(null);
   const [totalInQueue, setTotalInQueue] = useState<number | null>(null);
+  const [totalJoined, setTotalJoined] = useState<number | null>(null);
   const [estimatedWait, setEstimatedWait] = useState<number | null>(null);
   const [joined, setJoined] = useState(false);
   const [tokenReady, setTokenReady] = useState(false);
@@ -26,7 +27,7 @@ export default function WaitingRoom({ productId, userId, onTokenReceived, onSold
       redirectedRef.current = true;
       const timer = setTimeout(() => {
         onTokenReceived(receivedToken);
-      }, 1000);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [tokenReady, receivedToken, onTokenReceived]);
@@ -39,6 +40,7 @@ export default function WaitingRoom({ productId, userId, onTokenReceived, onSold
         setJoined(true);
         setPosition(data.position);
         setTotalInQueue(data.total);
+        setTotalJoined(data.total_joined);
         setEstimatedWait(data.estimated_wait_seconds);
 
         if (data.status === "ready" && data.token) {
@@ -62,6 +64,7 @@ export default function WaitingRoom({ productId, userId, onTokenReceived, onSold
         const data = await api.getPosition(productId, userId);
         setPosition(data.position);
         setTotalInQueue(data.total);
+        setTotalJoined(data.total_joined);
         setEstimatedWait(data.estimated_wait_seconds);
 
         if (data.status === "sold_out") {
@@ -93,6 +96,11 @@ export default function WaitingRoom({ productId, userId, onTokenReceived, onSold
         <p className="text-2xl font-bold text-green-400 mb-2">
           You&apos;re in!
         </p>
+        {totalJoined !== null && totalJoined > 1 && (
+          <p className="text-sm font-mono text-midnight-100/50 mb-2">
+            {totalJoined.toLocaleString()} users joined this drop
+          </p>
+        )}
         <p className="text-midnight-100/60">
           Redirecting to purchase...
         </p>
@@ -107,11 +115,16 @@ export default function WaitingRoom({ productId, userId, onTokenReceived, onSold
       {position !== null && (
         <p className="text-3xl font-bold text-midnight-500 mb-2">
           Position #{position + 1}
-          {totalInQueue !== null && (
+          {totalInQueue !== null && totalInQueue > 1 && (
             <span className="text-lg font-normal text-midnight-100/50">
               {" "}of {totalInQueue}
             </span>
           )}
+        </p>
+      )}
+      {totalJoined !== null && totalJoined > 1 && (
+        <p className="text-sm font-mono text-midnight-100/40 mb-1">
+          {totalJoined.toLocaleString()} total users joined
         </p>
       )}
       {estimatedWait !== null && estimatedWait > 0 && (

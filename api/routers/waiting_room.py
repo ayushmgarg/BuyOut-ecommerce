@@ -17,6 +17,7 @@ from api.services.waiting_room import (
     join_waiting_room,
     get_position,
     get_waiting_room_size,
+    get_total_joined,
 )
 from api.services.token import issue_token
 from internal.constants import INVENTORY_KEY, SALE_STARTS_AT_KEY
@@ -50,6 +51,7 @@ async def join(
 
     position = await join_waiting_room(redis, body.product_id, body.user_id)
     total = await get_waiting_room_size(redis, body.product_id)
+    total_joined = await get_total_joined(redis, body.product_id)
 
     # Estimate ~2 seconds per batch
     batches_ahead = position // settings.waiting_room_batch_size
@@ -61,6 +63,7 @@ async def join(
             status="ready",
             position=position,
             total=total,
+            total_joined=total_joined,
             estimated_wait_seconds=0,
             token=token,
         )
@@ -69,6 +72,7 @@ async def join(
         status="waiting",
         position=position,
         total=total,
+        total_joined=total_joined,
         estimated_wait_seconds=estimated_wait,
     )
 
@@ -81,6 +85,7 @@ async def check_position(
 ):
     position = await get_position(redis, product_id, user_id)
     total = await get_waiting_room_size(redis, product_id)
+    total_joined = await get_total_joined(redis, product_id)
 
     # Check if sold out — notify waiting users
     stock = await redis.get(INVENTORY_KEY.format(product_id=product_id))
@@ -89,6 +94,7 @@ async def check_position(
             status="sold_out",
             position=position,
             total=total,
+            total_joined=total_joined,
             estimated_wait_seconds=None,
         )
 
@@ -97,6 +103,7 @@ async def check_position(
             status="not_joined",
             position=None,
             total=total,
+            total_joined=total_joined,
             estimated_wait_seconds=None,
         )
 
@@ -106,6 +113,7 @@ async def check_position(
             status="ready",
             position=position,
             total=total,
+            total_joined=total_joined,
             estimated_wait_seconds=0,
             token=token,
         )
@@ -115,5 +123,6 @@ async def check_position(
         status="waiting",
         position=position,
         total=total,
+        total_joined=total_joined,
         estimated_wait_seconds=batches_ahead * 2,
     )

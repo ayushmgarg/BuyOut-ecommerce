@@ -17,6 +17,7 @@ class WaitingRoomPositionResponse(BaseModel):
     status: str  # "waiting" | "ready"
     position: int | None = None
     total: int | None = None
+    total_joined: int | None = None
     estimated_wait_seconds: int | None = None
     token: str | None = None
 

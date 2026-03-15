@@ -1,2 +1,77 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
+
+/* Radial pulse background for home page */
+@keyframes radial-pulse {
+  0%, 100% {
+    background: radial-gradient(ellipse at center, rgba(107, 92, 231, 0.08) 0%, transparent 70%);
+  }
+  50% {
+    background: radial-gradient(ellipse at center, rgba(107, 92, 231, 0.15) 0%, transparent 70%);
+  }
+}
+
+.animate-radial-pulse {
+  animation: radial-pulse 4s ease-in-out infinite;
+}
+
+/* Countdown urgency glow */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(248, 113, 113, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(248, 113, 113, 0.6);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 1s ease-in-out infinite;
+}
+
+/* Heartbeat effect for final countdown */
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.04); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.02); }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 0.8s ease-in-out infinite;
+}
+
+/* Custom scrollbar for event log */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(15, 15, 26, 0.5);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(107, 92, 231, 0.3);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 92, 231, 0.5);
+}
+
+/* Text gradient utility */
+.text-gradient-purple {
+  background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow text effect */
+.text-glow {
+  text-shadow: 0 0 20px rgba(107, 92, 231, 0.4), 0 0 40px rgba(107, 92, 231, 0.2);
+}
+
+/* Grid line subtle animation */
+@keyframes grid-fade {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.06; }
+}

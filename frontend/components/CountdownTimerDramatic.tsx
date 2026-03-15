@@ -1,0 +1,161 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+
+interface CountdownTimerDramaticProps {
+  targetTime: Date;
+  onComplete: () => void;
+}
+
+function splitDigits(value: number): [string, string] {
+  const padded = String(value).padStart(2, "0");
+  return [padded[0], padded[1]];
+}
+
+function DigitCard({
+  digit,
+  urgent,
+  critical,
+}: {
+  digit: string;
+  urgent: boolean;
+  critical: boolean;
+}) {
+  const borderClass = urgent
+    ? "border-red-500/50"
+    : "border-midnight-700/30";
+
+  const textClass = critical ? "text-red-400" : "text-white";
+
+  return (
+    <div
+      className={`
+        relative flex items-center justify-center
+        w-[60px] h-[80px]
+        bg-midnight-900/80 border rounded-lg overflow-hidden
+        ${borderClass}
+        ${urgent ? "animate-pulse-glow" : ""}
+      `}
+    >
+      <AnimatePresence mode="popLayout">
+        <motion.span
+          key={digit}
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -20, opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className={`text-5xl font-mono font-bold tabular-nums ${textClass}`}
+        >
+          {digit}
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function DigitPair({
+  value,
+  label,
+  urgent,
+  critical,
+}: {
+  value: number;
+  label: string;
+  urgent: boolean;
+  critical: boolean;
+}) {
+  const [d1, d2] = splitDigits(value);
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="flex gap-1">
+        <DigitCard digit={d1} urgent={urgent} critical={critical} />
+        <DigitCard digit={d2} urgent={urgent} critical={critical} />
+      </div>
+      <span className="text-[10px] uppercase tracking-widest text-midnight-100/40">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function ColonSeparator({ critical }: { critical: boolean }) {
+  return (
+    <div className="flex items-center pb-6">
+      <span
+        className={`text-4xl font-mono font-bold ${
+          critical ? "text-red-400" : "text-midnight-500"
+        }`}
+      >
+        :
+      </span>
+    </div>
+  );
+}
+
+export default function CountdownTimerDramatic({
+  targetTime,
+  onComplete,
+}: CountdownTimerDramaticProps) {
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const diff = targetTime.getTime() - Date.now();
+    return Math.max(0, Math.floor(diff / 1000));
+  });
+  const completedRef = useRef(false);
+
+  useEffect(() => {
+    completedRef.current = false;
+
+    const timer = setInterval(() => {
+      const diff = targetTime.getTime() - Date.now();
+      const seconds = Math.max(0, Math.floor(diff / 1000));
+      setTimeLeft(seconds);
+
+      if (seconds <= 0 && !completedRef.current) {
+        completedRef.current = true;
+        clearInterval(timer);
+        onComplete();
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetTime, onComplete]);
+
+  const hours = Math.floor(timeLeft / 3600);
+  const minutes = Math.floor((timeLeft % 3600) / 60);
+  const seconds = timeLeft % 60;
+
+  const urgent = timeLeft < 60 && timeLeft > 0;
+  const critical = timeLeft < 10 && timeLeft > 0;
+
+  return (
+    <div className={`text-center ${critical ? "animate-heartbeat" : ""}`}>
+      <p className="text-midnight-100/60 mb-6 uppercase tracking-widest text-sm">
+        Drop starts in
+      </p>
+      <div className="flex items-start justify-center gap-3">
+        <DigitPair
+          value={hours}
+          label="Hours"
+          urgent={urgent}
+          critical={critical}
+        />
+        <ColonSeparator critical={critical} />
+        <DigitPair
+          value={minutes}
+          label="Minutes"
+          urgent={urgent}
+          critical={critical}
+        />
+        <ColonSeparator critical={critical} />
+        <DigitPair
+          value={seconds}
+          label="Seconds"
+          urgent={urgent}
+          critical={critical}
+        />
+      </div>
+    </div>
+  );
+}

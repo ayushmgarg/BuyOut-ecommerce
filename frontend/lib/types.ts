@@ -1,6 +1,8 @@
 export interface WaitingRoomPosition {
-  status: "waiting" | "ready" | "not_joined";
+  status: "waiting" | "ready" | "not_joined" | "sold_out";
   position: number | null;
+  total: number | null;
+  total_joined: number | null;
   estimated_wait_seconds: number | null;
   token: string | null;
 }
@@ -36,6 +38,7 @@ export interface DashboardMetrics {
   stock: number;
   confirmed_orders: number;
   queue_depth: number;
+  total_joined: number;
   sold_out_count: number;
   active_reservations: number;
   throughput_rps: number;
@@ -56,4 +59,20 @@ export interface TransactionEvent {
   timestamp: number;
   status: "success" | "failed" | "compensated";
   reservation_id?: string;
+}
+
+export interface TimeSeriesPoint {
+  t: number;
+  stock: number;
+  orders: number;
+  queueDepth: number;
+  totalJoined: number;
+  soldOut: number;
+  throughput: number;
+  activeReservations: number;
+}
+
+export interface HistoryBootstrap {
+  type: "history";
+  time_series: TimeSeriesPoint[];
 }

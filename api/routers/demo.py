@@ -36,7 +36,7 @@ _sim_stats = {"total": 0, "purchased": 0, "sold_out": 0, "in_progress": 0}
 
 class LaunchBotsRequest(BaseModel):
     num_bots: int = Field(default=30, ge=1, le=10000)
-    stagger: float = Field(default=0.3, ge=0.05, le=5.0)
+    stagger: float = Field(default=0.01, ge=0.001, le=5.0)
 
 
 class LaunchBotsResponse(BaseModel):
@@ -56,8 +56,8 @@ async def _run_bot(redis: aioredis.Redis, product_id: str, user_id: str) -> str:
     if position < settings.waiting_room_batch_size:
         token = issue_token(user_id, product_id)
     else:
-        for _ in range(60):
-            await asyncio.sleep(2)
+        for _ in range(400):
+            await asyncio.sleep(0.3)
             pos = await get_position(redis, product_id, user_id)
             if pos is not None and pos < settings.waiting_room_batch_size:
                 token = issue_token(user_id, product_id)
@@ -78,6 +78,7 @@ async def _run_bot(redis: aioredis.Redis, product_id: str, user_id: str) -> str:
     # 4. Simulate payment confirmation directly in Redis
     reservation_key = RESERVATION_KEY.format(reservation_id=reservation_id)
     await redis.hset(reservation_key, "status", "confirmed")
+    await redis.incr(f"flash_sale:confirmed_count:{product_id}")
 
     logger.info("bot_purchased", user_id=user_id, reservation_id=reservation_id)
     return "purchased"
@@ -186,6 +187,7 @@ async def _chaos_bot(
                     reservation_id=result["reservation_id"]
                 )
                 await redis.hset(reservation_key, "status", "confirmed")
+                await redis.incr(f"flash_sale:confirmed_count:{product_id}")
                 return "purchased"
             return "error"
         except Exception:
@@ -259,7 +261,7 @@ async def launch_chaos(
 
 class ResetRequest(BaseModel):
     countdown_seconds: int = Field(default=30, ge=5, le=300)
-    stock: int = Field(default=100, ge=1, le=10000)
+    stock: int = Field(default=1000, ge=1, le=10000)
 
 
 @router.post("/reset")
@@ -270,6 +272,9 @@ async def reset_sale(
 ):
     """Reset all state: flush Redis, truncate Postgres, reload inventory, set countdown."""
     global _sim_running, _sim_stats
+
+    from api.services.dashboard_metrics import clear_time_series
+    clear_time_series()
 
     product_id = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 

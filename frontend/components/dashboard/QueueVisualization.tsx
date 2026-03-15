@@ -59,17 +59,19 @@ export default function QueueVisualization({ queueDepth }: QueueVisualizationPro
           x: w * 0.4 + Math.random() * w * 0.25,
           y: h * 0.3 + Math.random() * h * 0.4,
           targetX: w * 0.72,
-          targetY: h * 0.5 + (Math.random() - 0.5) * h * 0.15,
+          targetY: h * 0.42 + Math.random() * h * 0.16,
           speed: 0.4 + Math.random() * 0.6,
           phase: "funnel",
           hue: 270,
         };
       } else {
+        const channelTop = h * 0.38;
+        const channelHeight = h * 0.24;
         return {
-          x: w * 0.72 + Math.random() * w * 0.05,
-          y: h * 0.15 + Math.random() * h * 0.7,
+          x: w * 0.72 + Math.random() * w * 0.03,
+          y: channelTop + Math.random() * channelHeight,
           targetX: w * 0.95,
-          targetY: h * 0.15 + Math.random() * h * 0.7,
+          targetY: channelTop + Math.random() * channelHeight,
           speed: 0.5 + Math.random() * 0.5,
           phase: "queue",
           hue: 140,
@@ -88,7 +90,7 @@ export default function QueueVisualization({ queueDepth }: QueueVisualizationPro
       ctx.fillStyle = "rgba(8, 8, 16, 0.15)";
       ctx.fillRect(0, 0, w, h);
 
-      // Draw funnel shape (subtle guide lines)
+      // Draw funnel shape
       ctx.strokeStyle = "rgba(107, 92, 231, 0.08)";
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -107,11 +109,10 @@ export default function QueueVisualization({ queueDepth }: QueueVisualizationPro
       ctx.lineTo(w, h * 0.65);
       ctx.stroke();
 
-      // Target particle count based on queue depth
-      const targetCount = Math.min(Math.max(depthRef.current, 20), 500);
+      const raw = depthRef.current;
+      const targetCount = raw <= 0 ? 15 : Math.min(Math.floor(20 + Math.log10(raw + 1) * 30), 150);
       const particles = particlesRef.current;
 
-      // Add/remove particles
       while (particles.length < targetCount) {
         particles.push(createParticle(w, h));
       }
@@ -119,7 +120,6 @@ export default function QueueVisualization({ queueDepth }: QueueVisualizationPro
         particles.pop();
       }
 
-      // Update and draw particles
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         const dx = p.targetX - p.x;
@@ -127,7 +127,6 @@ export default function QueueVisualization({ queueDepth }: QueueVisualizationPro
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < 2) {
-          // Recycle particle
           particles[i] = createParticle(w, h);
           continue;
         }
@@ -135,9 +134,16 @@ export default function QueueVisualization({ queueDepth }: QueueVisualizationPro
         p.x += (dx / dist) * p.speed;
         p.y += (dy / dist) * p.speed;
 
-        // Add slight wobble to incoming particles
         if (p.phase === "incoming") {
           p.y += Math.sin(Date.now() * 0.003 + i) * 0.3;
+        }
+
+        // Clamp: queue particles stay in channel
+        p.x = Math.max(0, Math.min(w, p.x));
+        if (p.phase === "queue") {
+          p.y = Math.max(h * 0.36, Math.min(h * 0.64, p.y));
+        } else {
+          p.y = Math.max(0, Math.min(h, p.y));
         }
 
         const alpha = p.phase === "incoming" ? 0.4 : p.phase === "funnel" ? 0.7 : 0.9;
@@ -148,7 +154,6 @@ export default function QueueVisualization({ queueDepth }: QueueVisualizationPro
         ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
         ctx.fill();
 
-        // Glow for queue particles
         if (p.phase === "queue") {
           ctx.fillStyle = `hsla(${p.hue}, 70%, 60%, 0.15)`;
           ctx.beginPath();
@@ -169,7 +174,7 @@ export default function QueueVisualization({ queueDepth }: QueueVisualizationPro
   }, []);
 
   return (
-    <div className="bg-midnight-900/80 border border-midnight-700/30 rounded-xl p-4 h-full flex flex-col">
+    <div className="bg-midnight-900/80 border border-midnight-700/30 rounded-xl p-4 h-full flex flex-col overflow-hidden">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs uppercase tracking-widest text-midnight-100/50">
           Queue Flow
@@ -179,9 +184,8 @@ export default function QueueVisualization({ queueDepth }: QueueVisualizationPro
         </span>
       </div>
 
-      <div className="flex-1 relative min-h-0">
+      <div className="flex-1 relative min-h-0 overflow-hidden rounded-lg">
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full rounded-lg" />
-        {/* Zone labels */}
         <div className="absolute inset-0 flex pointer-events-none">
           <div className="w-[35%] flex items-end justify-center pb-2">
             <span className="text-[10px] uppercase tracking-widest text-purple-400/30">

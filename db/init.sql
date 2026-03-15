@@ -1,8 +1,7 @@
 -- Midnight Product Drop — Database Initialization
 -- Runs automatically via docker-entrypoint-initdb.d
 
-\i /docker-entrypoint-initdb.d/../migrations/001_create_products.sql
--- The above path won't work in docker. Use inline instead:
+-- Migrations are inlined below (individual files in db/migrations/ are for reference only)
 
 -- ============================================================
 -- 001: Products
@@ -70,9 +69,9 @@ INSERT INTO products (id, name, description, price_cents, total_stock, image_url
 VALUES (
     'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     'Midnight Edition Sneakers',
-    'Limited edition sneakers — only 100 pairs available worldwide.',
+    'Limited edition sneakers — only 1,000 pairs available worldwide.',
     14999,
-    100,
+    1000,
     '/images/midnight-sneakers.png',
     now() + INTERVAL '5 minutes'
 )

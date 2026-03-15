@@ -30,7 +30,7 @@ async def preload(product_id: str, stock: int, redis_url: str):
 def main():
     parser = argparse.ArgumentParser(description="Preload flash sale inventory")
     parser.add_argument("--product-id", default="a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
-    parser.add_argument("--stock", type=int, default=100)
+    parser.add_argument("--stock", type=int, default=1000)
     parser.add_argument("--redis-url", default=os.getenv("REDIS_URL", "redis://localhost:6379/0"))
     args = parser.parse_args()
 

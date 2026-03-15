@@ -22,6 +22,15 @@ async def dashboard_websocket(websocket: WebSocket):
     await websocket.accept()
     _dashboard_connections.add(websocket)
     logger.info("dashboard_ws_connected", total=len(_dashboard_connections))
+
+    # Send bootstrap history on initial connect
+    try:
+        from api.services.dashboard_metrics import get_time_series_snapshot
+        bootstrap = json.dumps({"type": "history", "time_series": get_time_series_snapshot()}, default=str)
+        await websocket.send_text(bootstrap)
+    except Exception as exc:
+        logger.warning("dashboard_bootstrap_error", error=str(exc))
+
     try:
         while True:
             await websocket.receive_text()
