@@ -86,4 +86,18 @@ export const api = {
   getBotStatus() {
     return fetchJson(`${API_URL}/demo/bot-status`);
   },
+
+  resetSale(countdownSeconds: number = 30, stock: number = 100) {
+    return fetchJson(`${API_URL}/demo/reset`, {
+      method: "POST",
+      body: JSON.stringify({ countdown_seconds: countdownSeconds, stock }),
+    });
+  },
+
+  launchChaos(numBots: number = 50000) {
+    return fetchJson(`${API_URL}/demo/chaos`, {
+      method: "POST",
+      body: JSON.stringify({ num_bots: numBots, stagger: 0.01 }),
+    });
+  },
 };

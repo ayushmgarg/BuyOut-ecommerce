@@ -80,6 +80,14 @@ class OrderResponse(BaseModel):
     created_at: datetime
 
 
+# ── Chaos / Demo ──
+
+class ChaosResponse(BaseModel):
+    status: str
+    num_bots: int
+    message: str
+
+
 # ── Health ──
 
 class HealthResponse(BaseModel):

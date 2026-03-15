@@ -1,15 +1,17 @@
 """Demo endpoint — launch bot users from the browser."""
 
 import asyncio
+import time
 import uuid
 
+import asyncpg
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 
 import redis.asyncio as aioredis
 
 from api.config import settings
-from api.dependencies import get_redis
+from api.dependencies import get_redis, get_db
 from api.services.waiting_room import join_waiting_room, get_position, remove_from_waiting_room
 from api.services.token import issue_token
 from api.services.reservation import reserve_stock
@@ -17,6 +19,7 @@ from api.services.payment import get_payment_provider
 from internal.constants import (
     RESERVATION_KEY,
     SALE_STARTS_AT_KEY,
+    SALE_ACTIVE_KEY,
     INVENTORY_KEY,
 )
 from internal.logging import get_logger
@@ -155,4 +158,150 @@ async def bot_status():
     return {
         "running": _sim_running,
         **_sim_stats,
+    }
+
+
+# ── Chaos Generator ──
+
+class LaunchChaosRequest(BaseModel):
+    num_bots: int = Field(default=50000, ge=1, le=50000)
+    stagger: float = Field(default=0.01, ge=0.001, le=1.0)
+
+
+async def _chaos_bot(
+    redis: aioredis.Redis,
+    semaphore: asyncio.Semaphore,
+    product_id: str,
+    user_id: str,
+) -> str:
+    """Simplified chaos bot — join + reserve directly (skip token gating)."""
+    async with semaphore:
+        try:
+            await join_waiting_room(redis, product_id, user_id)
+            result = await reserve_stock(redis, product_id, user_id, quantity=1)
+            if result["status"] == "out_of_stock":
+                return "sold_out"
+            if result["status"] == "reserved":
+                reservation_key = RESERVATION_KEY.format(
+                    reservation_id=result["reservation_id"]
+                )
+                await redis.hset(reservation_key, "status", "confirmed")
+                return "purchased"
+            return "error"
+        except Exception:
+            return "error"
+
+
+async def _run_chaos(
+    redis: aioredis.Redis,
+    product_id: str,
+    num_bots: int,
+    stagger: float,
+) -> None:
+    """Run massive chaos simulation as a background task."""
+    global _sim_running, _sim_stats
+
+    _sim_stats = {
+        "total": num_bots,
+        "purchased": 0,
+        "sold_out": 0,
+        "in_progress": num_bots,
+    }
+
+    semaphore = asyncio.Semaphore(500)
+
+    async def wrapper(user_id: str, delay: float) -> None:
+        await asyncio.sleep(delay)
+        outcome = await _chaos_bot(redis, semaphore, product_id, user_id)
+        if outcome == "purchased":
+            _sim_stats["purchased"] += 1
+        elif outcome == "sold_out":
+            _sim_stats["sold_out"] += 1
+        _sim_stats["in_progress"] -= 1
+
+    tasks = []
+    for i in range(num_bots):
+        delay = i * stagger
+        tasks.append(wrapper(f"chaos_{i:06d}", delay))
+
+    await asyncio.gather(*tasks)
+    _sim_running = False
+    logger.info("chaos_complete", stats=_sim_stats)
+
+
+@router.post("/chaos")
+async def launch_chaos(
+    body: LaunchChaosRequest,
+    redis: aioredis.Redis = Depends(get_redis),
+):
+    global _sim_running
+
+    async with _sim_lock:
+        if _sim_running:
+            return {
+                "status": "already_running",
+                "num_bots": _sim_stats["total"],
+                "message": f"In progress: {_sim_stats['purchased']} purchased, {_sim_stats['in_progress']} remaining",
+            }
+        _sim_running = True
+
+    product_id = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+    asyncio.create_task(_run_chaos(redis, product_id, body.num_bots, body.stagger))
+
+    return {
+        "status": "launched",
+        "num_bots": body.num_bots,
+        "message": f"{body.num_bots:,} chaos bots unleashed!",
+    }
+
+
+# ── Reset Sale ──
+
+class ResetRequest(BaseModel):
+    countdown_seconds: int = Field(default=30, ge=5, le=300)
+    stock: int = Field(default=100, ge=1, le=10000)
+
+
+@router.post("/reset")
+async def reset_sale(
+    body: ResetRequest = ResetRequest(),
+    redis: aioredis.Redis = Depends(get_redis),
+    db: asyncpg.Pool = Depends(get_db),
+):
+    """Reset all state: flush Redis, truncate Postgres, reload inventory, set countdown."""
+    global _sim_running, _sim_stats
+
+    product_id = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+
+    # 1. Flush Redis
+    await redis.flushall()
+
+    # 2. Truncate Postgres
+    async with db.acquire() as conn:
+        await conn.execute("TRUNCATE order_events, orders CASCADE")
+        await conn.execute("DELETE FROM idempotency_keys")
+
+    # 3. Reload inventory
+    await redis.set(INVENTORY_KEY.format(product_id=product_id), body.stock)
+    await redis.set(SALE_ACTIVE_KEY.format(product_id=product_id), "1")
+
+    # 4. Set sale start time
+    starts_at = int(time.time()) + body.countdown_seconds
+    await redis.set(SALE_STARTS_AT_KEY.format(product_id=product_id), str(starts_at))
+
+    # 5. Reset simulation state
+    _sim_running = False
+    _sim_stats = {"total": 0, "purchased": 0, "sold_out": 0, "in_progress": 0}
+
+    # 6. Re-register Lua scripts (flushed with FLUSHALL)
+    from api.services.reservation import init_scripts
+    await init_scripts(redis)
+
+    logger.info("sale_reset", stock=body.stock, starts_at=starts_at)
+
+    return {
+        "status": "reset",
+        "stock": body.stock,
+        "starts_at": starts_at,
+        "countdown_seconds": body.countdown_seconds,
     }

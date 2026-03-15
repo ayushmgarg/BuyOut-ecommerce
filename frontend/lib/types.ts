@@ -31,3 +31,29 @@ export interface StockUpdate {
   event: "reserved" | "confirmed" | "released" | "sold_out";
   timestamp: string;
 }
+
+export interface DashboardMetrics {
+  stock: number;
+  confirmed_orders: number;
+  queue_depth: number;
+  sold_out_count: number;
+  active_reservations: number;
+  throughput_rps: number;
+  worker_count: number;
+  worker_states: WorkerState[];
+  events: TransactionEvent[];
+  timestamp: number;
+}
+
+export interface WorkerState {
+  id: string;
+  state: "idle" | "processing" | "overloaded";
+}
+
+export interface TransactionEvent {
+  type: string;
+  user_id: string;
+  timestamp: number;
+  status: "success" | "failed" | "compensated";
+  reservation_id?: string;
+}

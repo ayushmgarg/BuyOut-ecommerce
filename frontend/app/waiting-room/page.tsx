@@ -15,9 +15,16 @@ export default function WaitingRoomPage() {
   const [botsLaunched, setBotsLaunched] = useState(false);
   const [botMessage, setBotMessage] = useState<string | null>(null);
 
-  // Generate userId client-side only to avoid hydration mismatch
+  // Persist userId in sessionStorage so refresh keeps queue position
   useEffect(() => {
-    setUserId(`user_${crypto.randomUUID().slice(0, 8)}`);
+    const stored = sessionStorage.getItem("flash_sale_user_id");
+    if (stored) {
+      setUserId(stored);
+    } else {
+      const id = `user_${crypto.randomUUID().slice(0, 8)}`;
+      sessionStorage.setItem("flash_sale_user_id", id);
+      setUserId(id);
+    }
   }, []);
 
   const handleTokenReceived = useCallback(
@@ -26,6 +33,10 @@ export default function WaitingRoomPage() {
     },
     [router]
   );
+
+  const handleSoldOut = useCallback(() => {
+    router.push("/sold-out");
+  }, [router]);
 
   const launchBots = (count: number) => {
     setBotMessage(null);
@@ -54,6 +65,7 @@ export default function WaitingRoomPage() {
             productId={PRODUCT_ID}
             userId={userId}
             onTokenReceived={handleTokenReceived}
+            onSoldOut={handleSoldOut}
           />
         ) : (
           <div className="w-16 h-16 border-4 border-midnight-500 border-t-transparent rounded-full animate-spin mx-auto" />

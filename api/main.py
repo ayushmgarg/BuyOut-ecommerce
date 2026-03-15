@@ -11,9 +11,11 @@ from slowapi.errors import RateLimitExceeded
 from api.config import settings
 from api.dependencies import init_redis, init_db, init_stripe, shutdown_pools
 from api.middleware.rate_limit import limiter
-from api.routers import health, inventory, waiting_room, reserve, payment, webhook, ws, demo
+from api.routers import health, inventory, waiting_room, reserve, payment, webhook, ws, demo, dashboard_ws
 from api.services.reservation import init_scripts
 from api.services.stock_broadcast import pubsub_listener
+from api.services.dashboard_metrics import start_event_collector
+from api.routers.dashboard_ws import start_dashboard_broadcast
 from internal.logging import setup_logging
 
 
@@ -25,16 +27,21 @@ async def lifespan(app: FastAPI):
     setup_logging(settings.log_level)
 
     redis = await init_redis()
-    await init_db()
+    db = await init_db()
     init_stripe()
     await init_scripts(redis)
 
     # Start pub/sub → WebSocket bridge as background task
     pubsub_task = asyncio.create_task(pubsub_listener(redis))
+    # Dashboard: event collector + metrics broadcast
+    event_collector_task = asyncio.create_task(start_event_collector(redis))
+    dashboard_task = asyncio.create_task(start_dashboard_broadcast(redis, db))
 
     yield
 
     pubsub_task.cancel()
+    event_collector_task.cancel()
+    dashboard_task.cancel()
     await shutdown_pools()
 
 
@@ -67,3 +74,4 @@ app.include_router(payment.router)
 app.include_router(webhook.router)
 app.include_router(ws.router)
 app.include_router(demo.router)
+app.include_router(dashboard_ws.router)

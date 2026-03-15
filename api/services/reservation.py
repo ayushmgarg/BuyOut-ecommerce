@@ -12,6 +12,8 @@ from internal.constants import (
     USER_RESERVED_KEY,
     ORDER_STREAM_KEY,
     STOCK_CHANNEL_KEY,
+    SOLD_OUT_COUNTER_KEY,
+    REQUEST_COUNTER_KEY,
 )
 from api.services.waiting_room import remove_from_waiting_room
 from internal.redis_client import register_lua_script
@@ -70,6 +72,7 @@ async def reserve_stock(
 
     if result == "OUT_OF_STOCK":
         logger.info("out_of_stock", product_id=product_id)
+        await redis.incr(SOLD_OUT_COUNTER_KEY.format(product_id=product_id))
         return {"status": "out_of_stock"}
 
     if isinstance(result, str) and result.startswith("RESERVED:"):
@@ -89,12 +92,15 @@ async def reserve_stock(
         # Remove from waiting room so positions shift for others
         await remove_from_waiting_room(redis, product_id, user_id)
 
-        # Broadcast stock update
+        # Increment request counter for dashboard metrics
+        await redis.incr(REQUEST_COUNTER_KEY.format(product_id=product_id))
+
+        # Broadcast stock update (enriched with user_id for dashboard)
         current_stock = await redis.get(inventory_key)
         channel = STOCK_CHANNEL_KEY.format(product_id=product_id)
         await redis.publish(
             channel,
-            f'{{"product_id":"{product_id}","stock":{current_stock},"event":"reserved"}}',
+            f'{{"product_id":"{product_id}","stock":{current_stock},"event":"reserved","user_id":"{user_id}","reservation_id":"{reservation_id}"}}',
         )
 
         logger.info(

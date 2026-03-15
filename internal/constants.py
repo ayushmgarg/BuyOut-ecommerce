@@ -12,6 +12,10 @@ STOCK_CHANNEL_KEY = "flash_sale:stock_channel:{product_id}"
 SALE_ACTIVE_KEY = "flash_sale:product:{product_id}:sale_active"
 SALE_STARTS_AT_KEY = "flash_sale:product:{product_id}:starts_at"
 
+# ── Dashboard Metrics ──
+SOLD_OUT_COUNTER_KEY = "flash_sale:product:{product_id}:sold_out_count"
+REQUEST_COUNTER_KEY = "flash_sale:product:{product_id}:request_count"
+
 # ── TTL Defaults (seconds) ──
 DEFAULT_RESERVATION_TTL = 120
 DEFAULT_TOKEN_TTL = 120

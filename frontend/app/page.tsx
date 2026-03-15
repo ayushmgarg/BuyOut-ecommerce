@@ -97,6 +97,19 @@ export default function Home() {
           {botMessage}
         </p>
       )}
+
+      <button
+        onClick={() => {
+          api.resetSale().then((data) => {
+            setBotsLaunched(false);
+            setBotMessage(null);
+            setTargetTime(new Date(data.starts_at * 1000));
+          });
+        }}
+        className="mt-6 px-4 py-2 bg-midnight-900 hover:bg-midnight-800 border border-midnight-700/30 rounded-lg text-xs text-midnight-100/50 hover:text-midnight-100/80 transition-colors uppercase tracking-widest"
+      >
+        Reset Sale
+      </button>
     </main>
   );
 }
