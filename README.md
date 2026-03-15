@@ -311,9 +311,7 @@ bash scripts/reset_all.sh
 
 This flushes Redis and truncates Postgres order tables. Run `preload_inventory.py` again to set up a new sale. You can also use the "Restock & Restart" button on the sold-out page or the "Reset Sale" button in Developer Tools.
 
-## Demo Script
 
-See [DEMO_SCRIPT.md](DEMO_SCRIPT.md) for a structured 3-minute walkthrough covering the architecture, drop flow, bot stress testing, real-time dashboard, and key technical innovations.
 
 ## Future Production Notes
 
