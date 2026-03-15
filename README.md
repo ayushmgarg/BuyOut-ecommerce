@@ -22,6 +22,7 @@ High-concurrency flash-sale system that guarantees exactly N successful purchase
                     │  + Expiry Sweep  │
                     └─────────────────┘
 ```
+![Architecture](image1.jpeg)
 
 | Service   | Tech          | Port | Role                                 |
 |-----------|---------------|------|--------------------------------------|
@@ -279,3 +280,8 @@ What would change for a real deployment:
 - **CDN**: Deploy frontend to Vercel or Cloudflare for global edge delivery
 - **Rate Limiting**: Add IP-based rate limiting at the load balancer level in addition to per-user limits
 - **Horizontal Scaling**: Auto-scale API replicas based on CPU/request rate, scale workers based on stream lag
+
+## Observer's Dashboard
+
+![Dashboard](image2.jpeg)
+
