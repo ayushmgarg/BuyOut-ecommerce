@@ -54,18 +54,20 @@ export default function TransactionFlow({ events }: TransactionFlowProps) {
   const [packetPosition, setPacketPosition] = useState(-1);
   const timeoutRef = useRef<NodeJS.Timeout[]>([]);
   const lastEventRef = useRef<string>("");
+  const animatingRef = useRef(false);
 
   useEffect(() => {
     if (events.length === 0) return;
+
+    // Don't interrupt an in-flight animation
+    if (animatingRef.current) return;
 
     const latest = events[events.length - 1];
     const eventKey = `${latest.user_id}_${latest.timestamp}`;
     if (eventKey === lastEventRef.current) return;
     lastEventRef.current = eventKey;
+    animatingRef.current = true;
 
-    // Clear previous animation
-    timeoutRef.current.forEach(clearTimeout);
-    timeoutRef.current = [];
     setShowRollback(false);
     setPacketPosition(-1);
     setStageStates(stages.map(() => "waiting"));
@@ -73,10 +75,9 @@ export default function TransactionFlow({ events }: TransactionFlowProps) {
 
     const isSuccess = latest.status === "success";
 
-    // Animate stages sequentially
+    // Animate stages sequentially (faster: 250ms per stage)
     const stageCount = isSuccess ? 4 : 2;
     for (let i = 0; i < stageCount; i++) {
-      // Activate stage
       const activateTimer = setTimeout(() => {
         setPacketPosition(i);
         setStageStates((prev) => {
@@ -84,22 +85,20 @@ export default function TransactionFlow({ events }: TransactionFlowProps) {
           next[i] = "active";
           return next;
         });
-      }, i * 400);
+      }, i * 250);
       timeoutRef.current.push(activateTimer);
 
-      // Complete stage
       const completeTimer = setTimeout(() => {
         setStageStates((prev) => {
           const next = [...prev];
           next[i] = "success";
           return next;
         });
-      }, i * 400 + 300);
+      }, i * 250 + 200);
       timeoutRef.current.push(completeTimer);
     }
 
     if (!isSuccess) {
-      // Show failure at stage 3
       const failTimer = setTimeout(() => {
         setStageStates((prev) => {
           const next = [...prev];
@@ -108,10 +107,9 @@ export default function TransactionFlow({ events }: TransactionFlowProps) {
         });
         setShowRollback(true);
         setPacketPosition(-1);
-      }, stageCount * 400 + 200);
+      }, stageCount * 250 + 150);
       timeoutRef.current.push(failTimer);
 
-      // Rollback: reverse stages
       const rollbackTimer = setTimeout(() => {
         setStageStates((prev) => {
           const next = [...prev];
@@ -119,18 +117,20 @@ export default function TransactionFlow({ events }: TransactionFlowProps) {
           next[1] = "failed";
           return next;
         });
-      }, stageCount * 400 + 800);
+      }, stageCount * 250 + 500);
       timeoutRef.current.push(rollbackTimer);
     }
 
-    // Reset after animation
+    // Reset after animation completes — unlock for next event
+    const totalDuration = isSuccess ? stageCount * 250 + 500 : stageCount * 250 + 1000;
     const resetTimer = setTimeout(() => {
       setStageStates(stages.map(() => "waiting"));
       setCurrentEvent(null);
       setShowRollback(false);
       setPacketPosition(-1);
       lastEventRef.current = "";
-    }, isSuccess ? 3000 : 3500);
+      animatingRef.current = false;
+    }, totalDuration);
     timeoutRef.current.push(resetTimer);
 
     return () => {

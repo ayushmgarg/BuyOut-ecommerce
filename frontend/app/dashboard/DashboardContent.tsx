@@ -132,7 +132,7 @@ export default function DashboardContent() {
       </div>
 
       {/* Row 2: Primary Charts (3 columns) */}
-      <div className="grid grid-cols-3 gap-3 flex-1 min-h-0 overflow-hidden">
+      <div className="grid grid-cols-3 grid-rows-1 gap-3 flex-1 min-h-0 overflow-hidden">
         <TimeSeriesChart
           data={timeSeries}
           dataKey="stock"
@@ -163,7 +163,7 @@ export default function DashboardContent() {
       </div>
 
       {/* Row 3: Orders Chart + Queue Flow + Event Log */}
-      <div className="grid grid-cols-3 gap-3 flex-1 min-h-0 overflow-hidden">
+      <div className="grid grid-cols-3 grid-rows-1 gap-3 flex-1 min-h-0 overflow-hidden">
         <TimeSeriesChart
           data={timeSeries}
           dataKey="orders"
